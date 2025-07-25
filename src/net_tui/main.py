@@ -32,7 +32,8 @@ class NetTuiApp(App):
         bluetooth_table = self.query_one("#bluetooth-table", DataTable)
         bluetooth_table.add_columns("CONNECTED", "NAME", "MAC ADDRESS")
 
-        self.action_refresh_data()
+        self.populate_wifi_table()
+        self.populate_bluetooth_table()
 
     def populate_wifi_table(self) -> None:
         """Populates the Wi-Fi table with scanned networks."""
