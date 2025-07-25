@@ -1,9 +1,10 @@
 from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer, DataTable, TabbedContent, TabPane
 from textual.containers import Container
+from textual import work
 
 from .wifi import scan_wifi_networks, WiFiNetwork
-from .bluetooth import scan_bluetooth_devices, BluetoothDevice
+from .bluetooth import scan_bluetooth_devices, discover_new_devices, BluetoothDevice
 
 
 class NetTuiApp(App):
@@ -12,6 +13,7 @@ class NetTuiApp(App):
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("r", "refresh_data", "Refresh"),
+        ("s", "scan_for_devices", "Scan"),
     ]
 
     def compose(self) -> ComposeResult:
@@ -66,6 +68,23 @@ class NetTuiApp(App):
             self.populate_wifi_table()
         elif active_tab_id == "bluetooth-pane":
             self.populate_bluetooth_table()
+
+    def action_scan_for_devices(self) -> None:
+        """Starts a scan for new Bluetooth devices in the background."""
+        active_tab_id = self.query_one(TabbedContent).active
+        if active_tab_id == "bluetooth-pane":
+            self.run_bluetooth_discovery()
+
+    @work(exclusive=True, thread=True)
+    def run_bluetooth_discovery(self) -> None:
+        """
+        Textual worker to run the blocking bluetooth discovery function.
+        """
+        self.notify("Scanning for new Bluetooth devices...")
+        discover_new_devices()
+        self.notify("Bluetooth scan complete.")
+        # Refresh table on main thread after scanning
+        self.call_from_thread(self.populate_bluetooth_table)
 
 
 if __name__ == "__main__":
